@@ -1,0 +1,139 @@
+---
+objects:
+  r: DARedis
+---
+mandatory: True
+code: |
+  if not r.exists("shutoffandconditions"):
+    r.set("shutoffandconditions", 0)
+---
+modules:
+  - .first_to_third
+  - .states
+---
+features:
+  hide standard menu: True
+  hide navbar: True
+---
+objects:
+  - full_name: Individual
+---
+mandatory: True
+code: |
+  utility_restored = ''
+  needed_repair = ''
+  something_else = ''
+---
+question: |
+  Reasonable Accommodation: Shutoffs and Other Unsafe or Unsanity Housing Conditions
+subquestion: |
+  Last Step! The forms you need have been identified and we just need a few pieces of information to fill in the details. You will be able to download the forms in .pdf or Word document format or email them to yourself on the next screen.
+fields:
+  - First Name: full_name.name.first
+  - Middle Name: full_name.name.middle
+    required: False
+  - Last Name: full_name.name.last
+  - Suffix: full_name.name.suffix
+    required: False
+    code: name_suffix()
+  #- Full Address: full_address
+  - Street Address: address_1
+  - Apartment Number (if any): address_2
+    required: False
+  - City: city
+  - State: state
+    input type: dropdown
+    code: |
+      {value:key for key, value in us_state_abbrev.items()}
+  - Zip: zipcode
+  - Accommodation Description: accommodation_description
+    input type: radio
+    choices:
+      - I need my landlord to make a repair within 3 days because it is having negative impacts on or exacerbating my disability: that my landlord make a repair within 3 days because it is having negative impacts on or exacerbating my disability. 
+      - I need my landlord to restore a utility (power, water, gas) within 3 days because it is having negative impacts on or exacerbating my disability.: that my landlord make a repair within 3 business days because it is having negative impacts on or exacerbating my disability. 
+      - I need something else
+  - Please describe the needed repair: needed_repair
+    input type: area
+    show if: 
+      variable: accommodation_description
+      is: that my landlord make a repair within 3 days because it is having negative impacts on or exacerbating my disability.
+  - Please describe the utility service that needs to be restored: utility_restored
+    show if:
+      variable: accommodation_description
+      is: that my landlord make a repair within 3 business days because it is having negative impacts on or exacerbating my disability.
+  - Please describe: something_else
+    input type: area
+    show if:
+      variable: accommodation_description
+      is: I need something else
+  - Why do you need this accommodation? (Your answer here should explain the connection between your disability and what you are asking for, it should not go into details about your diagnosis.): why_needed
+    input type: area
+    rows: 10
+    hint:  For example&#58; “I need an assistance animal because it will help reduce the symptoms related to my disability.” &#13;&#13;Or, “I need more time to move because, due to my disability, I will need additional time to find housing that meets my disability-related needs.” &#13;&#13;Explain how the requested accommodation will solve a problem connected to your disability, without providing detailed information about your disabling condition, which your housing provider is not entitled to ask about).
+---
+code: |
+  if accommodation_description == 'that my landlord make a repair within 3 days because it is having negative impacts on or exacerbating my disability.':
+    utility_restored = ''
+    something_else = ''
+depends_on:
+  - accommodation_description
+---
+code: |
+  if accommodation_description == 'that my landlord make a repair within 3 business days because it is having negative impacts on or exacerbating my disability.':
+    needed_repair = ''
+    something_else = ''
+depends_on:
+  - accommodation_description
+---
+code: |
+  if accommodation_description == 'I need something else':
+    needed_repair = ''
+    utility_restored = ''
+depends_on:
+  - accommodation_description
+---
+mandatory: True
+code: |
+  if accommodation_description == 'I need something else':
+    accommodation_description = ''
+---
+mandatory: true
+code: |
+  full_address = address_1
+  full_address += " #" + address_2 if len(address_2) > 0 else ""
+  full_address += ", " + city + ", " + state + " " + zipcode
+  if defined('accommodation_description'):
+    pon_accommodation_description = first_to_third(accommodation_description)
+  if defined('why_change'):
+    pon_why_change = first_to_third(why_change)
+  if defined('something_else'):
+    pon_something_else = first_to_third(something_else)
+  if defined('neg_rental_history'):
+    pon_neg_rental_history = first_to_third(neg_rental_history)
+  if defined('neg_crim'):
+    pon_neg_crim = first_to_third(neg_crim)
+  if defined('neg_cred'):
+    pon_neg_cred = first_to_third(neg_cred)
+  if defined('rules_changed'):
+    pon_rules_changed = first_to_third(rules_changed)
+  if defined('steps_taken'):
+    pon_steps_taken = first_to_third(steps_taken)
+  if defined('needed_repair'):
+    pon_needed_repair = first_to_third(needed_repair)
+  if defined('utility_restored'):
+    pon_utility_restored = first_to_third(utility_restored)
+  if defined('third_party'):
+    pon_third_party = first_to_third(third_party)
+  if defined('comm_method'):
+    pon_comm_method = first_to_third(comm_method)
+---
+mandatory: True
+question: |
+  Here is your document, ${ full_name }.<span style="display: none">${ r.incr("shutoffandconditions") } </span>
+attachment:
+  - name: Reasonable Accommodation Request
+    filename: letter
+    docx template file: Reasonable_Accomodation_Packet_Template_-_ShutOffAndConditions.docx
+    valid formats: 
+      - pdf
+      - docx

@@ -1,0 +1,41 @@
+#objects:
+#  r: DARedis
+#---
+#mandatory: True
+#code: |
+#    r.set("animal", 0)
+#    r.set("appdenials", 0)
+#    r.set("asthma", 0)
+#    r.set("caregiver", 0)
+#    r.set("communication", 0)
+#    r.set("leaseexitalternateapt", 0)
+#    r.set("leaseviolation", 0)
+#    r.set("mail", 0)
+#    r.set("moveouttime", 0)
+#    r.set("parking", 0)
+#    r.set("rampmodifications", 0)
+#    r.set("shutoffandconditions", 0)
+#    r.set("stairs", 0)
+#    all_done
+#---
+#question: |
+#  Document Generation Statistics
+#subquestion: |
+#  This screen shows the number of times that the reasonable accommodation forms have been assembled on this server.
+#
+#  Form Type  | How many
+#  -------|---------
+#  Animals  | ${ r.get("animal").decode() }
+#  Application Denials | ${ r.get("appdenials").decode() }
+#  Asthma | ${ r.get("asthma").decode() }
+#  Caregiver | ${ r.get("caregiver").decode() }
+#  Communication | ${ r.get("communication").decode() }
+#  Lease Exit Alternate Apartment | ${ r.get("leaseexitalternateapt").decode()}
+#  Lease Violations | ${ r.get("leaseviolation").decode() }
+#  Mail | ${ r.get("mail").decode() }
+#  Move-Out Time | ${ r.get("moveouttime").decode() }
+#  Parking | ${ r.get("parking").decode() }
+#  Ramps & Modifications | ${ r.get("rampmodifications").decode() }
+#  Shutoffs and Housing Conditions | ${ r.get("shutoffandconditions").decode() }
+#  Stairs | ${ r.get("stairs").decode() }
+#sets: all_done
