@@ -1,0 +1,91 @@
+metadata:
+  short title: vawa
+  title: vawa
+---
+---
+objects:
+  r: DARedis
+---
+mandatory: True
+code: |
+    if not r.exists("vawa"):
+      r.set("vawa", 0)
+---
+modules:
+  - .first_to_third
+  - .states
+---
+features:
+  hide standard menu: True
+  hide navbar: True
+---
+objects:
+  - full_name: Individual
+---
+question: |
+  Reasonable Accommodation - Domestic Violence
+subquestion: |
+  Last Step! The forms you need have been identified and we just need a few pieces of information to fill in the details. You will be able to download the forms in .pdf or Word document format or email them to yourself on the next screen.
+fields:
+  - Your Landlord or Property Manager's name: ll_name
+  - Your First Name: full_name.name.first
+  - Your Middle Name: full_name.name.middle
+    required: False
+  - Your Last Name: full_name.name.last
+  - Your Suffix (if any): full_name.name.suffix
+    required: False
+    code: name_suffix()
+  - Street Address: address_1
+    note: If you are facing domestic violence discrimination issues with your current landlord, enter your current address here. If you applied for housing and the application was denied due to eviction or criminal history related to domestic violence, enter the address of the address for the property where your application was denied.
+  - Apartment Number (if any): address_2
+    required: false
+  - City: city
+  - State: state
+    input type: dropdown
+    code: |
+      {value:key for key, value in us_state_abbrev.items()}
+  - Zip: zipcode
+  - The facts of my situation are as follows: why_needed
+    input type: area
+    rows: 10
+  - I therefore request that: dv_accommodation_request
+    input type: radio
+    choices:
+      - You accept this letter as my 30 days’ notice and end my lease early because I need to move out and my reason for moving out is related to being a domestic violence, sexual assault, or stalking survivor.
+      - You allow me to move to a different rental or apartment in your inventory as soon as one becomes available, which is necessary due to the circumstances described above related to my being a domestic violence, sexual assault, or stalking survivor.
+      - You rescind the alleged lease violation or eviction notice because it is directly related to me being a victim of domestic violence, sexual assault, or stalking.
+      - You cease attempts to charge me for damages to the rental caused by an abuser who resided with me and instead pursue collection against the domestic violence, sexual assault, or stalking perpetrator.
+      - You disregard the eviction or criminal history that was directly related to my victimization and reconsider my tenancy application.
+---
+mandatory: true
+code: |
+  full_address = address_1
+  full_address += " #" + address_2 if len(address_2) > 0 else ""
+  full_address += ", " + city + ", " + state + " " + zipcode
+  full_address = " ".join(full_address.split())
+---
+mandatory: True
+question: |
+  Here is your document, ${ full_name }.<span style="display: none">${ r.incr("vawa") } </span>
+attachment:
+  - name: Reasonable Accommodation Request
+    filename: letter
+    valid formats:
+      - pdf
+      - docx
+    content: |
+      [FLUSHLEFT]Dear ${ ll_name or "[BLANK]"},
+      
+      I am writing regarding my ${ "rental application for" if 'criminal' in dv_accommodation_request else "tenancy at"} ${ full_address }.
+      The Violence Against Women Act and 2022 reauthorizations (“VAWA”) prohibit covered housing providers from denying housing or evicting a victim of domestic violence, sexual assault, dating violence, or stalking simply because they are victims. Covered housing providers include public housing, project-based Section 8, tenant-based Section 8 (voucher-holders), USDA Rural Development, and Low-Income Housing Tax Credit properties. Additionally, the U.S. Department of Housing and Urban Development has issued guidance on VAWA housing protections for survivors (see PIH-2017-08, [https://www.hud.gov/sites/documents/PIH-2017-08VAWRA2013.PDF](https://www.hud.gov/sites/documents/PIH-2017-08VAWRA2013.PDF))
+      
+	    The facts of my situation are as follows: ${ why_needed or "[BLANK]"}
+      
+      I therefore request that ${ dv_accommodation_request or "[BLANK]"}
+      
+      If you require documentation to certify that I am a survivor of domestic violence or sexual assault, please provide that request to me in writing. Please ensure that all correspondence and documentation related to this matter are kept strictly confidential. Thank you for your prompt attention to this matter. 
+      
+      Sincerely,
+      
+      [FLUSHLEFT][TAB]__________________________________
+      [SKIPLINE][TAB]${ full_name.name.first + " " + full_name.name.middle + " " + full_name.name.last + " " +  full_name.name.suffix }
